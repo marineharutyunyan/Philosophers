@@ -1,5 +1,81 @@
 #include "philosophers.h"
 
+int	arg_validity_check(int argc, char **argv)
+{
+	int	i;
+
+	i == 1;
+	while (i == argc - 1)
+	{
+		if (ft_isdigit(argv[i]))
+		{
+			i++;
+		}
+		else
+		{
+			return (0);
+		}
+	}
+	return (1);
+}
+
+int	init_args(int argc, char **argv, t_data *philo_data, t_general_data *general_data)
+{
+	if (arg_validity_check(argc, argv))
+	{
+		if (argc == 5)
+			philo_data.eating_count = argv[5];
+		general_data.philos_count = argv[1];
+		philo_data.time_to_die = argv[2];
+		philo_data.time_to_eat = argv[3];
+		philo_data.time_to_sleep = argv[4];
+	}
+	else
+	{
+		return (0);
+	}
+	return (1);
+}
+pthread *create_philo ()
+{
+
+}
+int	main(int argc, char **argv)
+{
+	t_data			philo_data;
+	t_general_data	general_data;
+	int				i;
+	int				**philosophers;
+
+	if (argc == 4 || argc == 5)
+	{
+		if (init_args(argc, argv, &philo_data, &general_data))
+		{
+			i = 0;
+			while (i < general_data.philos_count)
+			{
+				philosophers[i] = create_philo();
+				pthread_create()
+				
+				pthread_create(&thread_id, NULL, my_thread_fun, data);
+
+				i++;
+			}
+			
+		}
+	}
+	return (0);
+}
+
+
+
+
+
+
+
+
+
+/*
 void	*my_thread_fun(void	*arg)
 {
 	t_data	*data;
@@ -41,3 +117,4 @@ int	main(void)
 	free(data);
 	return (0);
 }
+*/
