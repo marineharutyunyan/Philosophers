@@ -3,7 +3,7 @@ NAME		=	philo
 CC			=	cc
 SRCS		=	$(wildcard *.c libs/*c)
 OBJS		=	$(patsubst %.c, %.o, $(SRCS))
-CFLAGS		=	-I./libs/include #-Wall -Wextra -Werror 
+CFLAGS		=	-I./libs/include -fsanitize=address #-Wall -Wextra -Werror 
 RM			=	rm -f
 
 all:$(NAME)

@@ -9,8 +9,10 @@
 
 typedef struct s_general_data
 {
-	int			philos_count;
-	long long	program_time;
+	int				philos_count;
+	long long		program_time;
+	int				must_eat_count;
+	pthread_mutex_t	print_mutex;
 }		t_general_data;
 
 typedef struct s_data
@@ -22,6 +24,7 @@ typedef struct s_data
 	int				time_to_die;
 	int				num;
 	int				is_dead;
+	int 			is_full;
 	int				eating_count;
 	pthread_mutex_t	*left_mutex;
 	pthread_mutex_t	*right_mutex;
