@@ -45,7 +45,6 @@ int	init_args(int argc, char **argv, t_general_data *g_data, t_data *philo_data,
 	philo_data->general_data = g_data;
 	philo_data->is_full = 0;
 	philo_data->eating_count = 0;
-	philo_data->general_data = g_data;
 	if (argc == 6)
 		philo_data->general_data->must_eat_count = ft_atoi(argv[5]);
 	else
@@ -97,6 +96,7 @@ int is_equal(char *s1, char *s2)
 
 void print_aciton(t_data *philo_data, char *str)
 {
+	//printf("the mutex pointer is ----------- %p\n", &philo_data->general_data->print_mutex);
 	pthread_mutex_lock(&philo_data->general_data->print_mutex);
 	if (!is_equal(str, "full"))
 	{
@@ -122,6 +122,9 @@ void	*philo(void *arg)
 		print_aciton( philo_data,  "is eating");
 		my_usleep(philo_data->time_to_eat);
 		philo_data->last_eating_time = get_time(0);
+		philo_data->eating_count += 1;
+		if (philo_data->general_data->must_eat_count == philo_data->eating_count)
+			philo_data->is_full = 1;
 		pthread_mutex_unlock(philo_data->left_mutex);
 		pthread_mutex_unlock(philo_data->right_mutex);
 		print_aciton( philo_data,  "is sleeping");	
@@ -131,25 +134,34 @@ void	*philo(void *arg)
 	return(0);
 }
 
-int is_dead (t_data	*philo_data)
+int is_dead (t_data	*philos_data)
 {
 	int i;
+	int all_are_full;
 	long long	program_time;
 
 	i = 0;
-	
-	program_time = get_time(0) - philo_data[i].last_eating_time;
-	while (program_time < philo_data[i].time_to_die) 
+	all_are_full = 0;
+	program_time = get_time(0) - philos_data[i].last_eating_time;
+	while (program_time < philos_data[i].time_to_die) 
 	{
-		
-		program_time = get_time(0) - philo_data[i].last_eating_time;
-		if (i == philo_data->general_data->philos_count - 1)
+		if (philos_data[i].is_full)
+			all_are_full += 1;
+		program_time = get_time(0) - philos_data[i].last_eating_time;
+		if (i == philos_data->general_data->philos_count - 1)
 		{
 			i = -1;
+			if(all_are_full == philos_data->general_data->philos_count)
+			{
+				printf("all_are_full %d ,,, philos_count %d\n", all_are_full, philos_data->general_data->philos_count);
+				print_aciton(philos_data, "full");
+				return (1);
+			}
+			all_are_full = 0;
 		}
 		i++;
 	}
-	print_aciton(philo_data, "died");
+	print_aciton(philos_data, "died");
 	return (1);
 }
 
