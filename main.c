@@ -42,40 +42,68 @@ int	arg_validity_check(int argc, char **argv)
 
 int	init_args(int argc, char **argv, t_general_data *g_data, t_data *philo_data, int i)
 {
+	philo_data->general_data = g_data;
+	philo_data->is_full = 0;
+	philo_data->eating_count = 0;
+	philo_data->general_data = g_data;
 	if (argc == 6)
 		philo_data->general_data->must_eat_count = ft_atoi(argv[5]);
 	else
 		philo_data->general_data->must_eat_count = 0;
-	philo_data->is_full = 0;
 	philo_data->time_to_die = ft_atoi(argv[2]);
 	philo_data->time_to_eat = ft_atoi(argv[3]);
 	philo_data->time_to_sleep = ft_atoi(argv[4]);
 	philo_data->last_eating_time = get_time(0);
 	philo_data->name = i+1;
-	philo_data->general_data = g_data;
 	return (1);
+}
+int ft_str_len(char *str)
+{
+	int i;
+
+	i = 0;
+	if (!str)
+		return (i);
+
+	while (str[i])
+		i++;
+	return (i);
 }
 
 int is_equal(char *s1, char *s2)
 {
 	int i;
+	int s1_len;
+	int s2_len;
 
 	i = 0;
-	while (s1[i] != '\n')
+	s1_len = ft_str_len(s1);
+	s2_len = ft_str_len(s2);
+	if (s1_len == s2_len)
 	{
-		if (s1[i] != s2[i])
-			return (0);
-		i++;
+		while (s1[i])
+		{
+			if (s1[i] != s2[i])
+				return (0);
+			i++;
+		}
+		return (1);
 	}
-	return (1);
+	else
+	{
+		return (0);
+	}
 }
 
 void print_aciton(t_data *philo_data, char *str)
 {
 	pthread_mutex_lock(&philo_data->general_data->print_mutex);
-	printf(" %lld %d %s\n", get_time(philo_data->general_data->program_time), philo_data->name, str);
-	if (!is_equal(str, "died"))
-		pthread_mutex_unlock(&philo_data->general_data->print_mutex);
+	if (!is_equal(str, "full"))
+	{
+		printf(" %lld %d %s\n", get_time(philo_data->general_data->program_time), philo_data->name, str);
+		if (!is_equal(str, "died"))
+			pthread_mutex_unlock(&philo_data->general_data->print_mutex);
+	}
 }
 
 void	*philo(void *arg)
@@ -94,13 +122,9 @@ void	*philo(void *arg)
 		print_aciton( philo_data,  "is eating");
 		my_usleep(philo_data->time_to_eat);
 		philo_data->last_eating_time = get_time(0);
-		if (philo_data->general_data->must_eat_count)
-			philo_data->eating_count += 1; 
-		if (philo_data->general_data->must_eat_count == philo_data->eating_count)
-			philo_data->is_full = 1;
 		pthread_mutex_unlock(philo_data->left_mutex);
 		pthread_mutex_unlock(philo_data->right_mutex);
-		print_aciton( philo_data,  "is sleeping");
+		print_aciton( philo_data,  "is sleeping");	
 		my_usleep(philo_data->time_to_sleep);
 		print_aciton( philo_data,  "is thinking");
 	}
@@ -110,35 +134,22 @@ void	*philo(void *arg)
 int is_dead (t_data	*philo_data)
 {
 	int i;
-	int j;
-	int all_are_full;
 	long long	program_time;
-	int all_have_eaten;
 
 	i = 0;
 	
-	all_are_full = 0;
-	all_have_eaten = 0;
 	program_time = get_time(0) - philo_data[i].last_eating_time;
 	while (program_time < philo_data[i].time_to_die) 
 	{
-		j = 0;
-		while (j < philo_data->general_data->philos_count)
-		{
-			if (philo_data[i].is_full)
-			{
-				all_are_full += 1;
-			}
-			if(all_are_full == philo_data->general_data->philos_count)
-				return (0);
-			j++;
-		}
+		
 		program_time = get_time(0) - philo_data[i].last_eating_time;
 		if (i == philo_data->general_data->philos_count - 1)
+		{
 			i = -1;
+		}
 		i++;
 	}
-	print_aciton(philo_data, "died!\n");
+	print_aciton(philo_data, "died");
 	return (1);
 }
 
