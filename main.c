@@ -1,46 +1,9 @@
 #include "philosophers.h"
 
-long long get_time(long long last_eating_time)
-{
-	struct timeval current_time;
-    gettimeofday(&current_time, NULL);
-	long long time = (current_time.tv_sec * 1000) + (current_time.tv_usec/1000);
-	if (last_eating_time != 0)
-		return(time - last_eating_time);
-    return (time);
-}
+pthread_mutex_t	mutex;
 
-void my_usleep(int requested_time)
-{
-	long long time;
-	
-	time = get_time(0);
-	while (get_time(0) - time < requested_time)
-		usleep(500);
-}
-
-int	arg_validity_check(int argc, char **argv)
-{
-	int	i;
-	size_t	j;
-
-	i = 1;
-	while (i == argc - 1)
-	{
-		j = 0;
-		while (j < ft_strlen(argv[i]))
-		{
-			if (ft_isdigit(argv[i][j]))
-				j++;
-			else
-				return (0);
-		}
-		i++;
-	}
-	return (1);
-}
-
-int	init_args(int argc, char **argv, t_general_data *g_data, t_data *philo_data, int i)
+int	init_args(int argc, char **argv, t_general_data *g_data,
+		t_data *philo_data, int i)
 {
 	philo_data->general_data = g_data;
 	philo_data->is_full = 0;
@@ -53,157 +16,177 @@ int	init_args(int argc, char **argv, t_general_data *g_data, t_data *philo_data,
 	philo_data->time_to_eat = ft_atoi(argv[3]);
 	philo_data->time_to_sleep = ft_atoi(argv[4]);
 	philo_data->last_eating_time = get_time(0);
-	philo_data->name = i+1;
+	philo_data->name = i + 1;
 	return (1);
 }
-int ft_str_len(char *str)
+
+#include <errno.h>
+
+int	print_aciton(t_data *philo_data, char *str)
 {
-	int i;
-
-	i = 0;
-	if (!str)
-		return (i);
-
-	while (str[i])
-		i++;
-	return (i);
-}
-
-int is_equal(char *s1, char *s2)
-{
-	int i;
-	int s1_len;
-	int s2_len;
-
-	i = 0;
-	s1_len = ft_str_len(s1);
-	s2_len = ft_str_len(s2);
-	if (s1_len == s2_len)
+	// printf("the mutex pointer is ----------- %p\n", &philo_data->general_data->print_mutex);
+	if (pthread_mutex_lock(&philo_data->general_data->print_mutex) != 0)
 	{
-		while (s1[i])
-		{
-			if (s1[i] != s2[i])
-				return (0);
-			i++;
-		}
-		return (1);
+		// printf("errno = %d\n", errno);
+		// printf("code = %d\n", EDEADLK);
+		perror("lock");
+		return(1);
 	}
-	else
-	{
-		return (0);
-	}
-}
-
-void print_aciton(t_data *philo_data, char *str)
-{
-	//printf("the mutex pointer is ----------- %p\n", &philo_data->general_data->print_mutex);
-	pthread_mutex_lock(&philo_data->general_data->print_mutex);
+	// pthread_mutex_lock(&mutex);
 	if (!is_equal(str, "full"))
 	{
 		printf(" %lld %d %s\n", get_time(philo_data->general_data->program_time), philo_data->name, str);
 		if (!is_equal(str, "died"))
-			pthread_mutex_unlock(&philo_data->general_data->print_mutex);
+			if(pthread_mutex_unlock(&philo_data->general_data->print_mutex) != 0 )
+			{
+				perror("un lock");
+				return(1);
+			}
+			// pthread_mutex_unlock(&mutex);
 	}
+	return (0);
 }
+
 
 void	*philo(void *arg)
 {
-	t_data	*philo_data;
+	t_data	*p_data;
 
-	philo_data = (t_data *)arg;
-	if(philo_data->name % 2 == 0)
+	p_data = (t_data *)arg;
+	if (p_data->name % 2 == 0)
 		usleep(1000);
 	while (1)
 	{
-		pthread_mutex_lock(philo_data->left_mutex);
-		print_aciton( philo_data,  "has taken a fork");
-		pthread_mutex_lock(philo_data->right_mutex);
-		print_aciton( philo_data,  "has taken a fork");
-		print_aciton( philo_data,  "is eating");
-		my_usleep(philo_data->time_to_eat);
-		philo_data->last_eating_time = get_time(0);
-		philo_data->eating_count += 1;
-		if (philo_data->general_data->must_eat_count == philo_data->eating_count)
-			philo_data->is_full = 1;
-		pthread_mutex_unlock(philo_data->left_mutex);
-		pthread_mutex_unlock(philo_data->right_mutex);
-		print_aciton( philo_data,  "is sleeping");	
-		my_usleep(philo_data->time_to_sleep);
-		print_aciton( philo_data,  "is thinking");
+		pthread_mutex_lock(p_data->left_mutex);
+		if (print_aciton(p_data, "has taken a fork"))
+			return(0);
+		pthread_mutex_lock(p_data->right_mutex);
+		if (print_aciton(p_data, "has taken a fork"))
+			return (0);
+		print_aciton(p_data, "is eating");
+		my_usleep(p_data->time_to_eat);
+		p_data->last_eating_time = get_time(0);
+		p_data->eating_count += 1;
+		if (p_data->general_data->must_eat_count == p_data->eating_count)
+			p_data->is_full = 1;
+		pthread_mutex_unlock(p_data->left_mutex);
+		pthread_mutex_unlock(p_data->right_mutex);
+		if (print_aciton(p_data, "is sleeping"))
+			return (0);
+		my_usleep(p_data->time_to_sleep);
+		if (print_aciton(p_data, "is thinking"))
+			return (0);
 	}
-	return(0);
+	return (0);
 }
 
-int is_dead (t_data	*philos_data)
+int	is_dead (t_data	*philos_data, pthread_mutex_t *forks)
 {
-	int i;
-	int all_are_full;
+	int			i;
+	int			all_are_full;
 	long long	program_time;
 
 	i = 0;
 	all_are_full = 0;
-	program_time = get_time(0) - philos_data[i].last_eating_time;
-	while (program_time < philos_data[i].time_to_die) 
+	// program_time = get_time(0);
+	while (1)
 	{
 		if (philos_data[i].is_full)
 			all_are_full += 1;
-		program_time = get_time(0) - philos_data[i].last_eating_time;
+		// program_time = get_time(0) - philos_data[i].last_eating_time;
+		program_time = get_time(0);
+		if (program_time >  philos_data[i].last_eating_time + philos_data->time_to_die)
+			break;
 		if (i == philos_data->general_data->philos_count - 1)
 		{
 			i = -1;
-			if(all_are_full == philos_data->general_data->philos_count)
+			if (all_are_full == philos_data->general_data->philos_count)
 			{
 				printf("all_are_full %d ,,, philos_count %d\n", all_are_full, philos_data->general_data->philos_count);
-				print_aciton(philos_data, "full");
+				print_aciton(philos_data + 1, "full");
 				return (1);
 			}
 			all_are_full = 0;
 		}
 		i++;
 	}
-	print_aciton(philos_data, "died");
+	print_aciton(philos_data + i, "died");
+	// pthread_mutex_destroy(&philos_data->general_data->print_mutex);
+	// i = 0;
+	// while (i < philos_data->general_data->philos_count)
+	// {
+	// 	pthread_mutex_destroy(&forks[i++]);
+	// }
 	return (1);
+}
+
+void	create_mutexes(t_general_data *g_data, int i, pthread_mutex_t *forks)
+{
+	pthread_mutex_init(&g_data->print_mutex, 0);
+	while (i < g_data->philos_count)
+		pthread_mutex_init(&forks[i++], 0);
+}
+
+void set_mutexes(t_data *philo_data, t_general_data *g_data, pthread_mutex_t *forks, int i)
+{
+	philo_data->left_mutex = &forks[i];
+	if (i == g_data->philos_count - 1)
+		philo_data->right_mutex = &forks[0];
+	else
+		philo_data->right_mutex = &forks[i + 1];
+}
+
+void create_philos(t_general_data *general_data, t_data *philos_data)
+{
+	int	i;
+
+	i = 0;
+	general_data->program_time = get_time(0);
+	while (i < general_data->philos_count)
+	{
+		pthread_create(&philos_data[i].thread_id, NULL, philo, &philos_data[i]);
+		i++;
+	}
+}
+
+int arg_check(int argc, char **argv)
+{
+	if (argc == 5 || argc == 6)
+	{
+		if (arg_validity_check(argc, argv))
+			return (1);
+	}
+	return (0);
 }
 
 int	main(int argc, char **argv)
 {
 	t_data			*philos_data;
-	pthread_mutex_t *chopsicks;
+	pthread_mutex_t	*forks;
 	t_general_data	general_data;
 	int				i;
 
-	if (argc == 5 || argc == 6)
+	if (arg_check(argc, argv))
 	{
-		if (arg_validity_check(argc, argv))
+		general_data.philos_count = ft_atoi(argv[1]);
+		i = 0;
+		philos_data = malloc(sizeof(t_data) * general_data.philos_count);
+		forks = malloc(sizeof(pthread_mutex_t) * general_data.philos_count);
+		create_mutexes(&general_data, i, forks);
+		i = 0;
+		while (i < general_data.philos_count)
 		{
-			general_data.philos_count = ft_atoi(argv[1]);
-			i = 0;
-			philos_data = malloc(sizeof(t_data) * general_data.philos_count);
-			chopsicks = malloc(sizeof(pthread_mutex_t) * general_data.philos_count);
-			pthread_mutex_init(&general_data.print_mutex, 0);
-			while (i < general_data.philos_count)
-				pthread_mutex_init(&chopsicks[i++] , 0);	
-			i = 0;
-			while (i < general_data.philos_count)
-			{
-				init_args(argc, argv, &general_data, &philos_data[i], i);
-				philos_data[i].left_mutex = &chopsicks[i];
-				if (i == general_data.philos_count - 1)
-					philos_data[i].right_mutex = &chopsicks[0];
-				else
-					philos_data[i].right_mutex = &chopsicks[i + 1];
-				i++;
-			}
-			i = 0;
-			general_data.program_time = get_time(0);
-			while (i < general_data.philos_count)
-			{
-				pthread_create(&philos_data[i].thread_id, NULL, philo, &philos_data[i]);
-				i++;
-			}
+			init_args(argc, argv, &general_data, &philos_data[i], i);
+			set_mutexes(&philos_data[i], &general_data, forks, i);
+			i++;
 		}
+		create_philos(&general_data, philos_data);
+		i = 0;
+		while (pthread_detach(philos_data[i].thread_id))
+			i++;
+		is_dead(philos_data, forks);
+		printf("game_over\n");
 	}
-	is_dead(philos_data);
-	printf("game_over\n");
-	return (0);
+	// sleep(1);
+	return (write(1 ,"+", 1));
 }

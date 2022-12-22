@@ -50,3 +50,15 @@ int	ft_atoi(const char *str)
 	}
 	return (sign * nbr);
 }
+
+int	ft_str_len(char *str)
+{
+	int	i;
+
+	i = 0;
+	if (!str)
+		return (i);
+	while (str[i])
+		i++;
+	return (i);
+}
