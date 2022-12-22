@@ -1,6 +1,6 @@
 #include "philosophers.h"
 
-pthread_mutex_t	mutex;
+#include <errno.h>
 
 int	init_args(int argc, char **argv, t_general_data *g_data,
 		t_data *philo_data, int i)
@@ -20,33 +20,27 @@ int	init_args(int argc, char **argv, t_general_data *g_data,
 	return (1);
 }
 
-#include <errno.h>
-
 int	print_aciton(t_data *philo_data, char *str)
 {
-	// printf("the mutex pointer is ----------- %p\n", &philo_data->general_data->print_mutex);
 	if (pthread_mutex_lock(&philo_data->general_data->print_mutex) != 0)
 	{
-		// printf("errno = %d\n", errno);
-		// printf("code = %d\n", EDEADLK);
 		perror("lock");
-		return(1);
+		return (1);
 	}
-	// pthread_mutex_lock(&mutex);
 	if (!is_equal(str, "full"))
 	{
 		printf(" %lld %d %s\n", get_time(philo_data->general_data->program_time), philo_data->name, str);
 		if (!is_equal(str, "died"))
-			if(pthread_mutex_unlock(&philo_data->general_data->print_mutex) != 0 )
+		{
+			if (pthread_mutex_unlock(&philo_data->general_data->print_mutex) != 0)
 			{
 				perror("un lock");
-				return(1);
+				return (1);
 			}
-			// pthread_mutex_unlock(&mutex);
+		}
 	}
 	return (0);
 }
-
 
 void	*philo(void *arg)
 {
@@ -59,11 +53,12 @@ void	*philo(void *arg)
 	{
 		pthread_mutex_lock(p_data->left_mutex);
 		if (print_aciton(p_data, "has taken a fork"))
-			return(0);
+			return (0);
 		pthread_mutex_lock(p_data->right_mutex);
 		if (print_aciton(p_data, "has taken a fork"))
 			return (0);
-		print_aciton(p_data, "is eating");
+		if (print_aciton(p_data, "is eating"))
+			return (0);
 		my_usleep(p_data->time_to_eat);
 		p_data->last_eating_time = get_time(0);
 		p_data->eating_count += 1;
@@ -88,14 +83,12 @@ int	is_dead (t_data	*philos_data, pthread_mutex_t *forks)
 
 	i = 0;
 	all_are_full = 0;
-	// program_time = get_time(0);
 	while (1)
 	{
 		if (philos_data[i].is_full)
 			all_are_full += 1;
-		// program_time = get_time(0) - philos_data[i].last_eating_time;
 		program_time = get_time(0);
-		if (program_time >  philos_data[i].last_eating_time + philos_data->time_to_die)
+		if (program_time > philos_data[i].last_eating_time + philos_data->time_to_die)
 			break;
 		if (i == philos_data->general_data->philos_count - 1)
 		{
@@ -111,12 +104,6 @@ int	is_dead (t_data	*philos_data, pthread_mutex_t *forks)
 		i++;
 	}
 	print_aciton(philos_data + i, "died");
-	// pthread_mutex_destroy(&philos_data->general_data->print_mutex);
-	// i = 0;
-	// while (i < philos_data->general_data->philos_count)
-	// {
-	// 	pthread_mutex_destroy(&forks[i++]);
-	// }
 	return (1);
 }
 
@@ -187,6 +174,5 @@ int	main(int argc, char **argv)
 		is_dead(philos_data, forks);
 		printf("game_over\n");
 	}
-	// sleep(1);
-	return (write(1 ,"+", 1));
+	return (0);
 }

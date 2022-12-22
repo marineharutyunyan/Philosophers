@@ -27,7 +27,7 @@ long	long	get_time(long long last_eating_time)
 {
 	struct timeval	current_time;
 	long long		time;
-	// printf("last_eating_time = %lld\n", last_eating_time);
+
 	gettimeofday(&current_time, NULL);
 	time = (current_time.tv_sec * 1000) + (current_time.tv_usec / 1000);
 	if (last_eating_time != 0)

@@ -7,11 +7,8 @@
 # include <pthread.h>
 # include <sys/time.h>
 
-extern pthread_mutex_t mutex;
-
 typedef struct s_general_data
 {
-
 	int				philos_count;
 	long long		program_time;
 	int				must_eat_count;
