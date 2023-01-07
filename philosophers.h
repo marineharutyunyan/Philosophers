@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philosophers.h                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maharuty <maharuty@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/01/07 13:19:05 by maharuty          #+#    #+#             */
+/*   Updated: 2023/01/07 14:06:24 by maharuty         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef PHILOSOPHERS_H
 # define PHILOSOPHERS_H
 
@@ -39,6 +51,16 @@ size_t		ft_strlen(const char *s);
 int			ft_str_len(char *str);
 int			is_equal(char *s1, char *s2);
 void		my_usleep(int requested_time);
+void		set_philo_name(t_data *philo_data, int i);
+int			arg_check(int argc, char **argv);
+void		create_philos(t_general_data *general_data, t_data *philos_data);
+int			print_aciton(t_data *p_data, char *str);
+int			init_args(int argc, char **argv, t_general_data *g_data,
+				t_data *philo_data);
+void		set_mutes(t_data *p_data, t_general_data *g, pthread_mutex_t *f,
+				int i);
+int			create_mutexes(t_general_data *g_data,
+				pthread_mutex_t *forks);
 int			arg_validity_check(int argc, char **argv);
 
 #endif

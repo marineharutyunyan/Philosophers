@@ -1,4 +1,33 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maharuty <maharuty@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/01/07 13:19:08 by maharuty          #+#    #+#             */
+/*   Updated: 2023/01/07 13:19:09 by maharuty         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philosophers.h"
+
+int	init_args(int argc, char **argv, t_general_data *g_data,
+		t_data *philo_data)
+{
+	philo_data->general_data = g_data;
+	philo_data->is_full = 0;
+	philo_data->eating_count = 0;
+	if (argc == 6)
+		philo_data->general_data->must_eat_count = ft_atoi(argv[5]);
+	else
+		philo_data->general_data->must_eat_count = 0;
+	philo_data->time_to_die = ft_atoi(argv[2]);
+	philo_data->time_to_eat = ft_atoi(argv[3]);
+	philo_data->time_to_sleep = ft_atoi(argv[4]);
+	philo_data->last_eating_time = get_time(0);
+	return (1);
+}
 
 int	is_equal(char *s1, char *s2)
 {
@@ -50,7 +79,7 @@ int	arg_validity_check(int argc, char **argv)
 	size_t	j;
 
 	i = 1;
-	while (i == argc - 1)
+	while (i <= argc - 1)
 	{
 		j = 0;
 		while (j < ft_strlen(argv[i]))

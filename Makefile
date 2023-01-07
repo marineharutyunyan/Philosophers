@@ -3,13 +3,13 @@ NAME		=	philo
 CC			=	cc
 SRCS		=	$(wildcard *.c libs/*c)
 OBJS		=	$(patsubst %.c, %.o, $(SRCS))
-CFLAGS		=	-I./libs/include -fsanitize=address #-Wall -Wextra -Werror 
+CFLAGS		=	-I./libs/include -Wall -Wextra -Werror
 RM			=	rm -f
 
 all:$(NAME)
 
 $(NAME): $(OBJS) 
-	$(CC) $(CFLAGS) $(OBJS) -lmlx -framework OpenGL -framework AppKit -o $(NAME)
+	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
 clean:
 	$(RM) $(OBJS) 
